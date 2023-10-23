@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstname      String   @db.String
+  lastname       String   @db.String
+  role           Role     @default(USER)
+  email          String   @unique
+  website        String?
+  bio            String?
+  dateOfBirth    String?
+  location       String?
+  profilePicture String   @default("https://res.cloudinary.com/dw9frjz9o/image/upload/v1697917996/retri/c6zl6hxdbsdlvmb3tuy5.jpg")
+  userViewersId  String?  @db.ObjectId
+  userViewers    User?    @relation("UserViewers", references: [id], fields: [userViewersId], onDelete: NoAction, onUpdate: NoAction)
+  viewers        User[]   @relation("UserViewers")
+  followedByIDs  String[] @db.ObjectId
+  followedBy     User[]   @relation("UserFollows", fields: [followedByIDs], references: [id])
+  followingIDs   String[] @db.ObjectId
+  following      User[]   @relation("UserFollows", fields: [followingIDs], references: [id])
+  blogs          Blog[]   @relation("myPosts")
+  favorites      Blog[]   @relation("favorites")
+  likes          Blog[]   @relation("like")
+}
+
+model Blog {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  description       String
+  imageUrl          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  Category          Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId        String   @db.ObjectId
+  location          String?
+  author            User     @relation(name: "myPosts", fields: [authorId], references: [id])
+  authorId          String   @db.ObjectId
+  whichUserFavorite User?    @relation(name: "favorites", fields: [favoriteBlogId], references: [id])
+  favoriteBlogId    String?  @db.ObjectId
+  WhichUserLiked    User?    @relation(name: "like", fields: [likedBlogId], references: [id])
+  likedBlogId       String?  @db.ObjectId
+}
+
+model Category {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  blogs Blog[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
